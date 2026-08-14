@@ -74,7 +74,7 @@
       opacity: 0;
       max-height: 0;
       transform: scaleY(0.8);
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
       width: 100%;
     }
@@ -166,10 +166,9 @@
     .tier-limited   { color: #f1c40f; background: linear-gradient(180deg, #111118 60%, rgba(241, 196, 15, 0.3)); }
     .tier-limited::after { background: #f1c40f; box-shadow: 0 0 12px #f1c40f; }
 
-    /* ปรับแต่งส่วนปุ่มกดให้แสดง 2 ปุ่ม */
     .controls {
       display: flex;
-      flex-direction: row; /* เรียงแนวนอน */
+      flex-direction: row; 
       align-items: center;
       justify-content: center;
       gap: 15px;
@@ -201,9 +200,8 @@
       transform: scale(1.05);
     }
 
-    /* ปุ่ม Auto Spin */
     .btn-auto {
-      background: #8847ff; /* สีม่วง */
+      background: #8847ff; 
       box-shadow: 0 0 20px rgba(136, 71, 255, 0.5);
     }
     .btn-auto:hover:not(:disabled) {
@@ -212,7 +210,6 @@
       transform: scale(1.05);
     }
     
-    /* สถานะเมื่อกด Auto ค้างไว้ จะกระพริบสีแดง */
     .btn-auto.active {
       background: #e74c3c; 
       box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
@@ -402,7 +399,7 @@
 
     let totalSpins = 0;
     let isAutoSpinning = false;
-    let isCurrentlySpinning = false; // เอาไว้เช็คว่ากำลังวิ่งอยู่ไหม
+    let isCurrentlySpinning = false; 
     
     const inventory = {
       uncommon: 0,
@@ -452,105 +449,98 @@
     const winnerOverlay = document.getElementById('winnerOverlay');
     const winnerDisplay = document.getElementById('winnerDisplay');
 
-    // ฟังก์ชันเปิดแบบแมนนวล (กดเอง)
     function manualOpenCase() {
       if (isCurrentlySpinning) return;
       openCaseCore();
     }
 
-    // ฟังก์ชันเปิด-ปิดออโต้
     function toggleAutoSpin() {
       if (isAutoSpinning) {
-        // กำลังออโต้ ให้หยุด
         isAutoSpinning = false;
         autoBtn.classList.remove('active');
         autoBtn.innerText = "AUTO SPIN";
         
-        // ถ้าหยุดตอนที่ตารางนิ่งแล้ว ให้ปุ่มหลักกดได้ปกติ
         if (!isCurrentlySpinning) {
             spinBtn.disabled = false;
             spinBtn.innerText = "OPEN NEW CRATE";
         }
       } else {
-        // เริ่มออโต้
         isAutoSpinning = true;
         autoBtn.classList.add('active');
         autoBtn.innerText = "STOP AUTO";
         
-        // ถ้าตารางนิ่งอยู่ ให้เริ่มสุ่มรอบแรกเลย
         if (!isCurrentlySpinning) {
           openCaseCore();
         }
       }
     }
 
-    // แกนหลักของการสุ่ม (ทำงานร่วมกันทั้ง Manual และ Auto)
     function openCaseCore() {
       isCurrentlySpinning = true;
-      
       spinBtn.disabled = true;
       spinBtn.innerText = "OPENING...";
       
-      totalSpins++;
-
-      // เปิดตารางขึ้นมา
-      rouletteWrapper.classList.add('active');
-      const winningItem = getRandomItem();
-
-      itemStrip.style.transition = 'none';
-      itemStrip.style.transform = 'translateX(0px)';
-      itemStrip.innerHTML = '';
-
-      for (let i = 0; i < totalItems; i++) {
-        if (i === winningPosition) {
-          itemStrip.appendChild(createCardElement(winningItem));
-        } else {
-          itemStrip.appendChild(createCardElement(getRandomItem()));
-        }
-      }
-
-      void itemStrip.offsetWidth;
-
-      const container = document.getElementById('rouletteContainer');
-      const containerCenter = container.offsetWidth / 2;
-      const targetCardCenter = (winningPosition * cardWidth) + (cardWidth / 2);
-      const randomOffset = (Math.random() * (cardWidth - 40)) - ((cardWidth - 40) / 2);
-      const targetTranslateX = targetCardCenter - containerCenter + randomOffset;
-
-      itemStrip.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.15, 1)';
-      itemStrip.style.transform = `translateX(-${targetTranslateX}px)`;
-
-      // เมื่อหยุดหมุน
+      // 1. กดปุ๊บพับกล่องเก็บก่อน 
+      rouletteWrapper.classList.remove('active');
+      
+      // 2. รอ 300ms ให้กล่องพับเสร็จ แล้วกางกล่องใหม่สุ่มต่อ
       setTimeout(() => {
-        const color = getRarityColor(winningItem.rarity);
-        winnerDisplay.style.color = color;
-        winnerDisplay.innerText = winningItem.isMystery ? `? ${winningItem.text} ?` : winningItem.text;
-        
-        winnerOverlay.classList.add('show');
-        
-        inventory[winningItem.rarity]++;
-        updateStatsDisplay();
+          totalSpins++;
 
-        // แสดงผลหน้าจอ 1 วิ แล้วปิดทิ้ง
-        setTimeout(() => {
-          winnerOverlay.classList.remove('show');
-          isCurrentlySpinning = false;
-          
-          // *ไม่ปิดตาราง (คอมเมนต์ไว้) เพื่อให้ตารางเดิมค้างโชว์ไว้*
-          // rouletteWrapper.classList.remove('active'); 
-          
-          if (isAutoSpinning) {
-            // ถ้าระบบออโต้ยังเปิดอยู่ ให้ไปต่อทันที
-            openCaseCore();
-          } else {
-            // ถ้าไม่ออโต้แล้ว ก็ให้ปุ่มสามารถกดเริ่มใหม่ได้
-            spinBtn.disabled = false;
-            spinBtn.innerText = "OPEN NEW CRATE";
+          rouletteWrapper.classList.add('active');
+          const winningItem = getRandomItem();
+
+          itemStrip.style.transition = 'none';
+          itemStrip.style.transform = 'translateX(0px)';
+          itemStrip.innerHTML = '';
+
+          for (let i = 0; i < totalItems; i++) {
+            if (i === winningPosition) {
+              itemStrip.appendChild(createCardElement(winningItem));
+            } else {
+              itemStrip.appendChild(createCardElement(getRandomItem()));
+            }
           }
-          
-        }, 1000); 
 
-      }, 6200);
+          void itemStrip.offsetWidth;
+
+          const container = document.getElementById('rouletteContainer');
+          const containerCenter = container.offsetWidth / 2;
+          const targetCardCenter = (winningPosition * cardWidth) + (cardWidth / 2);
+          const randomOffset = (Math.random() * (cardWidth - 40)) - ((cardWidth - 40) / 2);
+          const targetTranslateX = targetCardCenter - containerCenter + randomOffset;
+
+          itemStrip.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.15, 1)';
+          itemStrip.style.transform = `translateX(-${targetTranslateX}px)`;
+
+          // เมื่อหยุดหมุน
+          setTimeout(() => {
+            const color = getRarityColor(winningItem.rarity);
+            winnerDisplay.style.color = color;
+            winnerDisplay.innerText = winningItem.isMystery ? `? ${winningItem.text} ?` : winningItem.text;
+            
+            winnerOverlay.classList.add('show');
+            
+            inventory[winningItem.rarity]++;
+            updateStatsDisplay();
+
+            // แสดงผลหน้าจอ 1 วิ แล้วปิดหน้าจอรางวัลทิ้ง
+            setTimeout(() => {
+              winnerOverlay.classList.remove('show');
+              isCurrentlySpinning = false;
+              
+              if (isAutoSpinning) {
+                openCaseCore();
+              } else {
+                spinBtn.disabled = false;
+                spinBtn.innerText = "OPEN NEW CRATE";
+              }
+              
+            }, 1000); 
+
+          }, 6200);
+
+      }, 300); 
     }
 
     function getRarityColor(rarity) {
