@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRIMINALITY CASE SIMULATOR</title>
+  <!-- Google Fonts: Rubik Glitch & Teko -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=Teko:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: #08080a;
+      color: #fff;
+      font-family: 'Teko', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Cyber Scanline Background */
+    body::before {
+      content: " ";
+      position: fixed;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Glitch Title */
+    .title {
+      font-family: 'Rubik Glitch', cursive;
+      font-size: 52px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 2px 2px #ff0055, -2px -2px #00e5ff;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    /* กล่องวงล้อสุ่ม - ซ่อนไว้ตอนแรก */
+    .roulette-wrapper {
+      opacity: 0;
+      max-height: 0;
+      transform: scaleY(0.8);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      width: 900px;
+      max-width: 95vw;
+    }
+
+    .roulette-wrapper.active {
+      opacity: 1;
+      max-height: 200px;
+      transform: scaleY(1);
+      margin-bottom: 25px;
+    }
+
+    .roulette-container {
+      position: relative;
+      width: 100%;
+      height: 130px;
+      background: #0f0f14;
+      border: 2px solid #22222d;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(0,0,0,0.8);
+    }
+
+    /* เส้นเล็งกึ่งกลาง */
+    .center-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      background: #00e5ff;
+      transform: translateX(-50%);
+      z-index: 10;
+      box-shadow: 0 0 15px #00e5ff, 0 0 5px #fff;
+    }
+
+    /* แถบเลื่อนไอเทม */
+    .item-strip {
+      display: flex;
+      height: 100%;
+      will-change: transform;
+      transform: translateX(0px);
+    }
+
+    /* กล่องการ์ดสี่เหลี่ยมผืนผ้าแนวนอน */
+    .item-card {
+      width: 220px;
+      height: 100%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 2px solid #14141c;
+      background: #111118;
+      position: relative;
+      padding: 10px;
+    }
+
+    /* ตัวหนังสือฟอนต์ Glitch ภายในกล่องการ์ด */
+    .card-text {
+      font-family: 'Rubik Glitch', cursive;
+      font-size: 28px;
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .mystery-mark {
+      font-family: 'Rubik Glitch', cursive;
+      font-size: 60px;
+      line-height: 1;
+      text-shadow: 0 0 12px currentColor;
+    }
+
+    .item-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    /* สไตล์สีตามระดับ */
+    .tier-uncommon  { color: #2ecc71; background: linear-gradient(180deg, #111118 60%, rgba(46, 204, 113, 0.15)); }
+    .tier-uncommon::after { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+
+    .tier-rare      { color: #3498db; background: linear-gradient(180deg, #111118 60%, rgba(52, 152, 219, 0.15)); }
+    .tier-rare::after { background: #3498db; box-shadow: 0 0 8px #3498db; }
+
+    .tier-epic      { color: #9b59b6; background: linear-gradient(180deg, #111118 60%, rgba(155, 89, 182, 0.15)); }
+    .tier-epic::after { background: #9b59b6; box-shadow: 0 0 8px #9b59b6; }
+
+    .tier-legendary { color: #e74c3c; background: linear-gradient(180deg, #111118 60%, rgba(231, 76, 60, 0.15)); }
+    .tier-legendary::after { background: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
+
+    .tier-exotic    { color: #e67e22; background: linear-gradient(180deg, #111118 60%, rgba(230, 126, 34, 0.25)); }
+    .tier-exotic::after { background: #e67e22; box-shadow: 0 0 10px #e67e22; }
+
+    .tier-limited   { color: #f1c40f; background: linear-gradient(180deg, #111118 60%, rgba(241, 196, 15, 0.3)); }
+    .tier-limited::after { background: #f1c40f; box-shadow: 0 0 12px #f1c40f; }
+
+    /* ปุ่มกดสไตล์ Glitch */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    button {
+      font-family: 'Rubik Glitch', cursive;
+      padding: 14px 45px;
+      font-size: 24px;
+      letter-spacing: 3px;
+      color: #fff;
+      background: #ff0055;
+      border: none;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #00e5ff;
+      color: #000;
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.8);
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background: #333340;
+      color: #666;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* แผงแสดงเปอร์เซ็นต์ */
+    .rates-panel {
+      margin-top: 30px;
+      background: rgba(14, 14, 18, 0.9);
+      border: 1px solid #20202a;
+      border-radius: 4px;
+      padding: 10px 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 19px;
+      letter-spacing: 1px;
+    }
+
+    .rate-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* FULLSCREEN WINNER OVERLAY (1 SECOND) */
+    .winner-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(4, 4, 6, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .winner-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .winner-title {
+      font-family: 'Teko', sans-serif;
+      font-size: 32px;
+      letter-spacing: 5px;
+      color: #888;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .winner-display {
+      font-family: 'Rubik Glitch', cursive;
+      font-size: 72px;
+      letter-spacing: 4px;
+      text-align: center;
+      text-shadow: 0 0 30px currentColor;
+      /* ลบ animation ออกเพื่อให้ข้อความอยู่นิ่งๆ */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title">CRIMINALITY CRATE</div>
+
+  <!-- Roulette Container (ซ่อนอยู่จนกว่าจะกดปุ่ม) -->
+  <div class="roulette-wrapper" id="rouletteWrapper">
+    <div class="roulette-container" id="rouletteContainer">
+      <div class="center-line"></div>
+      <div class="item-strip" id="itemStrip"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="spinBtn" onclick="openCase()">UNLOCK CRATE</button>
+  </div>
+
+  <!-- Drop Rates Panel -->
+  <div class="rates-panel">
+    <div class="rate-tag"><span class="dot" style="background:#2ecc71;"></span> UNCOMMON: 77%</div>
+    <div class="rate-tag"><span class="dot" style="background:#3498db;"></span> RARE: 20%</div>
+    <div class="rate-tag"><span class="dot" style="background:#9b59b6;"></span> EPIC: 2.2%</div>
+    <div class="rate-tag"><span class="dot" style="background:#e74c3c;"></span> LEGENDARY: 0.6%</div>
+    <div class="rate-tag"><span class="dot" style="background:#e67e22;"></span> EXOTIC (?): 0.2%</div>
+    <div class="rate-tag"><span class="dot" style="background:#f1c40f;"></span> LIMITED (?): 0.01%</div>
+  </div>
+
+  <!-- FULLSCREEN WINNER POPUP -->
+  <div class="winner-overlay" id="winnerOverlay">
+    <div class="winner-title">CRATE UNLOCKED</div>
+    <div class="winner-display" id="winnerDisplay"></div>
+  </div>
+
+  <script>
+    const itemPool = [
+      { text: "UNCOMMON", rarity: "uncommon", chance: 77.0, isMystery: false },
+      { text: "RARE",     rarity: "rare",     chance: 20.0, isMystery: false },
+      { text: "EPIC",     rarity: "epic",     chance: 2.2,  isMystery: false },
+      { text: "LEGENDARY",rarity: "legendary",chance: 0.6,  isMystery: false },
+      { text: "EXOTIC",   rarity: "exotic",   chance: 0.2,  isMystery: true },
+      { text: "LIMITED",  rarity: "limited",  chance: 0.01, isMystery: true }
+    ];
+
+    const cardWidth = 220; 
+    const winningPosition = 35; 
+    const totalItems = 45; 
+
+    function getRandomItem() {
+      const totalWeight = itemPool.reduce((sum, item) => sum + item.chance, 0);
+      let rand = Math.random() * totalWeight;
+      for (const item of itemPool) {
+        if (rand < item.chance) return item;
+        rand -= item.chance;
+      }
+      return itemPool[itemPool.length - 1];
+    }
+
+    function createCardElement(item) {
+      const card = document.createElement('div');
+      card.className = `item-card tier-${item.rarity}`;
+      
+      if (item.isMystery) {
+        card.innerHTML = `<div class="mystery-mark">?</div>`;
+      } else {
+        card.innerHTML = `<div class="card-text">${item.text}</div>`;
+      }
+      return card;
+    }
+
+    const itemStrip = document.getElementById('itemStrip');
+    const rouletteWrapper = document.getElementById('rouletteWrapper');
+    const spinBtn = document.getElementById('spinBtn');
+    const winnerOverlay = document.getElementById('winnerOverlay');
+    const winnerDisplay = document.getElementById('winnerDisplay');
+
+    function openCase() {
+      spinBtn.disabled = true;
+
+      // 1. แสดงกล่องสุ่มทันทีเมื่อกดปุ่ม
+      rouletteWrapper.classList.add('active');
+
+      const winningItem = getRandomItem();
+
+      // 2. รีเซ็ตแถบหมุนกลับมาที่ 0
+      itemStrip.style.transition = 'none';
+      itemStrip.style.transform = 'translateX(0px)';
+      itemStrip.innerHTML = '';
+
+      for (let i = 0; i < totalItems; i++) {
+        if (i === winningPosition) {
+          itemStrip.appendChild(createCardElement(winningItem));
+        } else {
+          itemStrip.appendChild(createCardElement(getRandomItem()));
+        }
+      }
+
+      // บังคับ Render ก่อนเริ่มอนิเมชัน
+      void itemStrip.offsetWidth;
+
+      // 3. คำนวณตำแหน่งหยุดกึ่งกลาง
+      const container = document.getElementById('rouletteContainer');
+      const containerCenter = container.offsetWidth / 2;
+      const targetCardCenter = (winningPosition * cardWidth) + (cardWidth / 2);
+      const randomOffset = (Math.random() * (cardWidth - 40)) - ((cardWidth - 40) / 2);
+      const targetTranslateX = targetCardCenter - containerCenter + randomOffset;
+
+      // 4. สั่งเริ่มหมุน
+      itemStrip.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.15, 1)';
+      itemStrip.style.transform = `translateX(-${targetTranslateX}px)`;
+
+      // 5. เมื่อหยุดหมุน แสดง Popup เต็มจอ 1 วินาที
+      setTimeout(() => {
+        const color = getRarityColor(winningItem.rarity);
+        winnerDisplay.style.color = color;
+        winnerDisplay.innerText = winningItem.isMystery ? `? ${winningItem.text} ?` : winningItem.text;
+        
+        winnerOverlay.classList.add('show');
+
+        // แสดงผล 1 วินาที (1000ms) แล้วปิดลงอัตโนมัติ
+        setTimeout(() => {
+          winnerOverlay.classList.remove('show');
+          spinBtn.disabled = false;
+        }, 1000); // <--- ปรับเป็น 1000ms (1 วินาที) แล้ว
+
+      }, 6200);
+    }
+
+    function getRarityColor(rarity) {
+      switch(rarity) {
+        case 'uncommon':  return '#2ecc71';
+        case 'rare':      return '#3498db';
+        case 'epic':      return '#9b59b6';
+        case 'legendary': return '#e74c3c';
+        case 'exotic':    return '#e67e22';
+        case 'limited':   return '#f1c40f';
+        default:          return '#ffffff';
+      }
+    }
+  </script>
+</body>
+</html>
