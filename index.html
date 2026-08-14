@@ -24,10 +24,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center; /* เปลี่ยนกลับเป็น center เพื่อให้อยู่กลางจอ */
       overflow-x: hidden;
       position: relative;
-      padding-top: 50px;
+      padding: 20px; /* เพิ่ม padding เผื่อขอบจอในมือถือ */
     }
 
     body::before {
@@ -40,9 +40,17 @@
       z-index: -1;
     }
 
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 900px;
+    }
+
     .title {
       font-family: 'Rubik Glitch', cursive;
-      font-size: 52px;
+      font-size: clamp(32px, 8vw, 52px); /* ใช้ clamp ให้ปรับขนาดตามจอ */
       letter-spacing: 4px;
       text-transform: uppercase;
       color: #fff;
@@ -51,9 +59,8 @@
       text-align: center;
     }
 
-    /* Counter แสดงจำนวนรอบที่สุ่ม */
     .spin-counter {
-      font-size: 24px;
+      font-size: clamp(18px, 4vw, 24px);
       color: #888;
       margin-bottom: 25px;
       letter-spacing: 2px;
@@ -69,8 +76,7 @@
       transform: scaleY(0.8);
       transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
-      width: 900px;
-      max-width: 95vw;
+      width: 100%;
     }
 
     .roulette-wrapper.active {
@@ -165,12 +171,13 @@
       flex-direction: column;
       align-items: center;
       gap: 15px;
+      width: 100%;
     }
 
     button {
       font-family: 'Rubik Glitch', cursive;
       padding: 14px 45px;
-      font-size: 24px;
+      font-size: clamp(20px, 5vw, 24px);
       letter-spacing: 3px;
       color: #fff;
       background: #ff0055;
@@ -179,6 +186,7 @@
       cursor: pointer;
       box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     button:hover:not(:disabled) {
@@ -196,47 +204,49 @@
       transform: none;
     }
 
-    /* กล่องแสดงสถิติไอเทมที่ได้รับ */
+    /* กล่องแสดงสถิติไอเทมที่ได้รับ - ปรับปรุงสำหรับมือถือ */
     .inventory-stats {
       margin-top: 30px;
       background: rgba(14, 14, 18, 0.9);
       border: 1px solid #20202a;
       border-radius: 4px;
-      padding: 15px 25px;
-      display: flex;
-      gap: 25px;
-      flex-wrap: wrap;
+      padding: 15px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* ใช้ Grid ช่วยจัดเรียงในจอมือถือ */
+      gap: 15px;
       justify-content: center;
-      font-size: 22px;
+      font-size: clamp(16px, 4vw, 22px);
       letter-spacing: 1px;
-      max-width: 900px;
+      width: 100%;
     }
 
     .stat-item {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      opacity: 0.35; /* ทำให้มืดลงตอนที่ยังไม่มีของ */
+      opacity: 0.35; 
       transition: opacity 0.3s ease;
+      white-space: nowrap;
     }
 
     .stat-item.active {
-      opacity: 1; /* สว่างขึ้นเมื่อเคยได้ไอเทมนั้นแล้ว */
+      opacity: 1; 
     }
 
     .stat-count {
       font-weight: bold;
       color: #fff;
-      font-size: 24px;
+      font-size: clamp(18px, 5vw, 24px);
     }
 
     .rates-panel {
       margin-top: 20px;
       display: flex;
-      gap: 20px;
+      gap: 15px;
       flex-wrap: wrap;
       justify-content: center;
-      font-size: 16px;
+      font-size: clamp(12px, 3.5vw, 16px);
       color: #666;
       letter-spacing: 1px;
     }
@@ -275,7 +285,7 @@
 
     .winner-title {
       font-family: 'Teko', sans-serif;
-      font-size: 32px;
+      font-size: clamp(24px, 6vw, 32px);
       letter-spacing: 5px;
       color: #888;
       margin-bottom: 10px;
@@ -284,61 +294,61 @@
 
     .winner-display {
       font-family: 'Rubik Glitch', cursive;
-      font-size: 72px;
+      font-size: clamp(40px, 12vw, 72px);
       letter-spacing: 4px;
       text-align: center;
       text-shadow: 0 0 30px currentColor;
+      padding: 0 20px;
     }
   </style>
 </head>
 <body>
 
-  <div class="title">CRIMINALITY CRATE</div>
-  
-  <!-- แสดงจำนวนครั้งที่สุ่มไปแล้ว -->
-  <div class="spin-counter">TOTAL SPINS: <span id="totalSpinsDisplay">0</span></div>
+  <div class="main-container">
+    <div class="title">CRIMINALITY CRATE</div>
+    
+    <div class="spin-counter">TOTAL SPINS: <span id="totalSpinsDisplay">0</span></div>
 
-  <div class="roulette-wrapper" id="rouletteWrapper">
-    <div class="roulette-container" id="rouletteContainer">
-      <div class="center-line"></div>
-      <div class="item-strip" id="itemStrip"></div>
+    <div class="roulette-wrapper" id="rouletteWrapper">
+      <div class="roulette-container" id="rouletteContainer">
+        <div class="center-line"></div>
+        <div class="item-strip" id="itemStrip"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="controls">
-    <button id="spinBtn" onclick="openCase()">UNLOCK CRATE</button>
-  </div>
+    <div class="controls">
+      <button id="spinBtn" onclick="openCase()">UNLOCK CRATE</button>
+    </div>
 
-  <!-- แผงแสดงจำนวนไอเทมที่สุ่มได้ (Inventory Stats) -->
-  <div class="inventory-stats">
-    <div class="stat-item" id="stat-uncommon">
-      <span class="stat-count" id="count-uncommon">0</span> <span style="color:#2ecc71;">UNCOMMON</span>
+    <div class="inventory-stats">
+      <div class="stat-item" id="stat-uncommon">
+        <span class="stat-count" id="count-uncommon">0</span> <span style="color:#2ecc71;">UNCOMMON</span>
+      </div>
+      <div class="stat-item" id="stat-rare">
+        <span class="stat-count" id="count-rare">0</span> <span style="color:#3498db;">RARE</span>
+      </div>
+      <div class="stat-item" id="stat-epic">
+        <span class="stat-count" id="count-epic">0</span> <span style="color:#9b59b6;">EPIC</span>
+      </div>
+      <div class="stat-item" id="stat-legendary">
+        <span class="stat-count" id="count-legendary">0</span> <span style="color:#e74c3c;">LEGENDARY</span>
+      </div>
+      <div class="stat-item" id="stat-exotic">
+        <span class="stat-count" id="count-exotic">0</span> <span style="color:#e67e22;">EXOTIC</span>
+      </div>
+      <div class="stat-item" id="stat-limited">
+        <span class="stat-count" id="count-limited">0</span> <span style="color:#f1c40f;">LIMITED</span>
+      </div>
     </div>
-    <div class="stat-item" id="stat-rare">
-      <span class="stat-count" id="count-rare">0</span> <span style="color:#3498db;">RARE</span>
-    </div>
-    <div class="stat-item" id="stat-epic">
-      <span class="stat-count" id="count-epic">0</span> <span style="color:#9b59b6;">EPIC</span>
-    </div>
-    <div class="stat-item" id="stat-legendary">
-      <span class="stat-count" id="count-legendary">0</span> <span style="color:#e74c3c;">LEGENDARY</span>
-    </div>
-    <div class="stat-item" id="stat-exotic">
-      <span class="stat-count" id="count-exotic">0</span> <span style="color:#e67e22;">EXOTIC</span>
-    </div>
-    <div class="stat-item" id="stat-limited">
-      <span class="stat-count" id="count-limited">0</span> <span style="color:#f1c40f;">LIMITED</span>
-    </div>
-  </div>
 
-  <!-- Drop Rates Panel -->
-  <div class="rates-panel">
-    <div class="rate-tag"><span class="dot" style="background:#2ecc71;"></span> 77%</div>
-    <div class="rate-tag"><span class="dot" style="background:#3498db;"></span> 20%</div>
-    <div class="rate-tag"><span class="dot" style="background:#9b59b6;"></span> 2.2%</div>
-    <div class="rate-tag"><span class="dot" style="background:#e74c3c;"></span> 0.6%</div>
-    <div class="rate-tag"><span class="dot" style="background:#e67e22;"></span> 0.2%</div>
-    <div class="rate-tag"><span class="dot" style="background:#f1c40f;"></span> 0.01%</div>
+    <div class="rates-panel">
+      <div class="rate-tag"><span class="dot" style="background:#2ecc71;"></span> 77%</div>
+      <div class="rate-tag"><span class="dot" style="background:#3498db;"></span> 20%</div>
+      <div class="rate-tag"><span class="dot" style="background:#9b59b6;"></span> 2.2%</div>
+      <div class="rate-tag"><span class="dot" style="background:#e74c3c;"></span> 0.6%</div>
+      <div class="rate-tag"><span class="dot" style="background:#e67e22;"></span> 0.2%</div>
+      <div class="rate-tag"><span class="dot" style="background:#f1c40f;"></span> 0.01%</div>
+    </div>
   </div>
 
   <div class="winner-overlay" id="winnerOverlay">
@@ -360,7 +370,6 @@
     const winningPosition = 35; 
     const totalItems = 45; 
 
-    // เก็บค่าสถานะ
     let totalSpins = 0;
     const inventory = {
       uncommon: 0,
@@ -392,7 +401,6 @@
       return card;
     }
 
-    // ฟังก์ชันอัปเดตหน้าจอโชว์สถิติ
     function updateStatsDisplay() {
       document.getElementById('totalSpinsDisplay').innerText = totalSpins;
 
@@ -400,7 +408,6 @@
         const count = inventory[rarity];
         document.getElementById(`count-${rarity}`).innerText = count;
         
-        // ถ้าเคยได้ไอเทมนั้นแล้ว ให้ตัวหนังสือกดสว่างขึ้น
         if (count > 0) {
           document.getElementById(`stat-${rarity}`).classList.add('active');
         }
@@ -417,7 +424,6 @@
       spinBtn.disabled = true;
       spinBtn.innerText = "OPENING...";
       
-      // เพิ่มจำนวนรอบที่สุ่ม
       totalSpins++;
 
       rouletteWrapper.classList.add('active');
@@ -453,7 +459,6 @@
         
         winnerOverlay.classList.add('show');
         
-        // เพิ่มจำนวนของลงในคลัง แล้วอัปเดตหน้าจอทันที
         inventory[winningItem.rarity]++;
         updateStatsDisplay();
 
