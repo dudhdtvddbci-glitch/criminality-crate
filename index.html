@@ -24,10 +24,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center; /* เปลี่ยนกลับเป็น center เพื่อให้อยู่กลางจอ */
+      justify-content: center;
       overflow-x: hidden;
       position: relative;
-      padding: 20px; /* เพิ่ม padding เผื่อขอบจอในมือถือ */
+      padding: 20px;
     }
 
     body::before {
@@ -50,7 +50,7 @@
 
     .title {
       font-family: 'Rubik Glitch', cursive;
-      font-size: clamp(32px, 8vw, 52px); /* ใช้ clamp ให้ปรับขนาดตามจอ */
+      font-size: clamp(32px, 8vw, 52px);
       letter-spacing: 4px;
       text-transform: uppercase;
       color: #fff;
@@ -166,45 +166,74 @@
     .tier-limited   { color: #f1c40f; background: linear-gradient(180deg, #111118 60%, rgba(241, 196, 15, 0.3)); }
     .tier-limited::after { background: #f1c40f; box-shadow: 0 0 12px #f1c40f; }
 
+    /* ปรับแต่งส่วนปุ่มกดให้แสดง 2 ปุ่ม */
     .controls {
       display: flex;
-      flex-direction: column;
+      flex-direction: row; /* เรียงแนวนอน */
       align-items: center;
+      justify-content: center;
       gap: 15px;
       width: 100%;
+      flex-wrap: wrap; 
     }
 
     button {
       font-family: 'Rubik Glitch', cursive;
-      padding: 14px 45px;
-      font-size: clamp(20px, 5vw, 24px);
+      padding: 14px 35px;
+      font-size: clamp(18px, 4vw, 22px);
       letter-spacing: 3px;
       color: #fff;
-      background: #ff0055;
       border: none;
       clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
       transition: all 0.2s ease;
       white-space: nowrap;
     }
 
-    button:hover:not(:disabled) {
+    .btn-manual {
+      background: #ff0055;
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+    }
+    .btn-manual:hover:not(:disabled) {
       background: #00e5ff;
       color: #000;
       box-shadow: 0 0 25px rgba(0, 229, 255, 0.8);
       transform: scale(1.05);
     }
 
-    button:disabled {
-      background: #333340;
-      color: #666;
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
+    /* ปุ่ม Auto Spin */
+    .btn-auto {
+      background: #8847ff; /* สีม่วง */
+      box-shadow: 0 0 20px rgba(136, 71, 255, 0.5);
+    }
+    .btn-auto:hover:not(:disabled) {
+      background: #b185ff;
+      box-shadow: 0 0 25px rgba(177, 133, 255, 0.8);
+      transform: scale(1.05);
+    }
+    
+    /* สถานะเมื่อกด Auto ค้างไว้ จะกระพริบสีแดง */
+    .btn-auto.active {
+      background: #e74c3c; 
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+      animation: pulseAuto 1.5s infinite;
     }
 
-    /* กล่องแสดงสถิติไอเทมที่ได้รับ - ปรับปรุงสำหรับมือถือ */
+    @keyframes pulseAuto {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    button:disabled {
+      background: #333340 !important;
+      color: #666 !important;
+      box-shadow: none !important;
+      cursor: not-allowed;
+      transform: none !important;
+      animation: none !important;
+    }
+
     .inventory-stats {
       margin-top: 30px;
       background: rgba(14, 14, 18, 0.9);
@@ -212,7 +241,7 @@
       border-radius: 4px;
       padding: 15px 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* ใช้ Grid ช่วยจัดเรียงในจอมือถือ */
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
       justify-content: center;
       font-size: clamp(16px, 4vw, 22px);
@@ -317,7 +346,8 @@
     </div>
 
     <div class="controls">
-      <button id="spinBtn" onclick="openCase()">UNLOCK CRATE</button>
+      <button id="spinBtn" class="btn-manual" onclick="manualOpenCase()">UNLOCK CRATE</button>
+      <button id="autoBtn" class="btn-auto" onclick="toggleAutoSpin()">AUTO SPIN</button>
     </div>
 
     <div class="inventory-stats">
@@ -371,6 +401,9 @@
     const totalItems = 45; 
 
     let totalSpins = 0;
+    let isAutoSpinning = false;
+    let isCurrentlySpinning = false; // เอาไว้เช็คว่ากำลังวิ่งอยู่ไหม
+    
     const inventory = {
       uncommon: 0,
       rare: 0,
@@ -403,11 +436,9 @@
 
     function updateStatsDisplay() {
       document.getElementById('totalSpinsDisplay').innerText = totalSpins;
-
       for (const rarity in inventory) {
         const count = inventory[rarity];
         document.getElementById(`count-${rarity}`).innerText = count;
-        
         if (count > 0) {
           document.getElementById(`stat-${rarity}`).classList.add('active');
         }
@@ -417,15 +448,52 @@
     const itemStrip = document.getElementById('itemStrip');
     const rouletteWrapper = document.getElementById('rouletteWrapper');
     const spinBtn = document.getElementById('spinBtn');
+    const autoBtn = document.getElementById('autoBtn');
     const winnerOverlay = document.getElementById('winnerOverlay');
     const winnerDisplay = document.getElementById('winnerDisplay');
 
-    function openCase() {
+    // ฟังก์ชันเปิดแบบแมนนวล (กดเอง)
+    function manualOpenCase() {
+      if (isCurrentlySpinning) return;
+      openCaseCore();
+    }
+
+    // ฟังก์ชันเปิด-ปิดออโต้
+    function toggleAutoSpin() {
+      if (isAutoSpinning) {
+        // กำลังออโต้ ให้หยุด
+        isAutoSpinning = false;
+        autoBtn.classList.remove('active');
+        autoBtn.innerText = "AUTO SPIN";
+        
+        // ถ้าหยุดตอนที่ตารางนิ่งแล้ว ให้ปุ่มหลักกดได้ปกติ
+        if (!isCurrentlySpinning) {
+            spinBtn.disabled = false;
+            spinBtn.innerText = "OPEN NEW CRATE";
+        }
+      } else {
+        // เริ่มออโต้
+        isAutoSpinning = true;
+        autoBtn.classList.add('active');
+        autoBtn.innerText = "STOP AUTO";
+        
+        // ถ้าตารางนิ่งอยู่ ให้เริ่มสุ่มรอบแรกเลย
+        if (!isCurrentlySpinning) {
+          openCaseCore();
+        }
+      }
+    }
+
+    // แกนหลักของการสุ่ม (ทำงานร่วมกันทั้ง Manual และ Auto)
+    function openCaseCore() {
+      isCurrentlySpinning = true;
+      
       spinBtn.disabled = true;
       spinBtn.innerText = "OPENING...";
       
       totalSpins++;
 
+      // เปิดตารางขึ้นมา
       rouletteWrapper.classList.add('active');
       const winningItem = getRandomItem();
 
@@ -452,6 +520,7 @@
       itemStrip.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.15, 1)';
       itemStrip.style.transform = `translateX(-${targetTranslateX}px)`;
 
+      // เมื่อหยุดหมุน
       setTimeout(() => {
         const color = getRarityColor(winningItem.rarity);
         winnerDisplay.style.color = color;
@@ -462,11 +531,23 @@
         inventory[winningItem.rarity]++;
         updateStatsDisplay();
 
+        // แสดงผลหน้าจอ 1 วิ แล้วปิดทิ้ง
         setTimeout(() => {
           winnerOverlay.classList.remove('show');
-          rouletteWrapper.classList.remove('active'); 
-          spinBtn.disabled = false;
-          spinBtn.innerText = "OPEN NEW CRATE"; 
+          isCurrentlySpinning = false;
+          
+          // *ไม่ปิดตาราง (คอมเมนต์ไว้) เพื่อให้ตารางเดิมค้างโชว์ไว้*
+          // rouletteWrapper.classList.remove('active'); 
+          
+          if (isAutoSpinning) {
+            // ถ้าระบบออโต้ยังเปิดอยู่ ให้ไปต่อทันที
+            openCaseCore();
+          } else {
+            // ถ้าไม่ออโต้แล้ว ก็ให้ปุ่มสามารถกดเริ่มใหม่ได้
+            spinBtn.disabled = false;
+            spinBtn.innerText = "OPEN NEW CRATE";
+          }
+          
         }, 1000); 
 
       }, 6200);
