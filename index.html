@@ -371,9 +371,9 @@
     <div class="rates-panel">
       <div class="rate-tag"><span class="dot" style="background:#2ecc71;"></span> 77%</div>
       <div class="rate-tag"><span class="dot" style="background:#3498db;"></span> 20%</div>
-      <div class="rate-tag"><span class="dot" style="background:#9b59b6;"></span> 2.2%</div>
-      <div class="rate-tag"><span class="dot" style="background:#e74c3c;"></span> 0.6%</div>
-      <div class="rate-tag"><span class="dot" style="background:#e67e22;"></span> 0.2%</div>
+      <div class="rate-tag"><span class="dot" style="background:#9b59b6;"></span> 2.25%</div>
+      <div class="rate-tag"><span class="dot" style="background:#e74c3c;"></span> 0.57%</div>
+      <div class="rate-tag"><span class="dot" style="background:#e67e22;"></span> 0.17%</div>
       <div class="rate-tag"><span class="dot" style="background:#f1c40f;"></span> 0.01%</div>
     </div>
   </div>
@@ -384,12 +384,13 @@
   </div>
 
   <script>
+    // อัปเดต Drop Rates ใหม่
     const itemPool = [
       { text: "UNCOMMON", rarity: "uncommon", chance: 77.0, isMystery: false },
       { text: "RARE",     rarity: "rare",     chance: 20.0, isMystery: false },
-      { text: "EPIC",     rarity: "epic",     chance: 2.2,  isMystery: false },
-      { text: "LEGENDARY",rarity: "legendary",chance: 0.6,  isMystery: false },
-      { text: "EXOTIC",   rarity: "exotic",   chance: 0.2,  isMystery: true },
+      { text: "EPIC",     rarity: "epic",     chance: 2.25, isMystery: false },
+      { text: "LEGENDARY",rarity: "legendary",chance: 0.57, isMystery: false },
+      { text: "EXOTIC",   rarity: "exotic",   chance: 0.17, isMystery: true },
       { text: "LIMITED",  rarity: "limited",  chance: 0.01, isMystery: true }
     ];
 
@@ -480,10 +481,8 @@
       spinBtn.disabled = true;
       spinBtn.innerText = "OPENING...";
       
-      // 1. กดปุ๊บพับกล่องเก็บก่อน 
       rouletteWrapper.classList.remove('active');
       
-      // 2. รอ 300ms ให้กล่องพับเสร็จ แล้วกางกล่องใหม่สุ่มต่อ
       setTimeout(() => {
           totalSpins++;
 
@@ -513,7 +512,6 @@
           itemStrip.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.15, 1)';
           itemStrip.style.transform = `translateX(-${targetTranslateX}px)`;
 
-          // เมื่อหยุดหมุน
           setTimeout(() => {
             const color = getRarityColor(winningItem.rarity);
             winnerDisplay.style.color = color;
@@ -524,7 +522,6 @@
             inventory[winningItem.rarity]++;
             updateStatsDisplay();
 
-            // แสดงผลหน้าจอ 1 วิ แล้วปิดหน้าจอรางวัลทิ้ง
             setTimeout(() => {
               winnerOverlay.classList.remove('show');
               isCurrentlySpinning = false;
